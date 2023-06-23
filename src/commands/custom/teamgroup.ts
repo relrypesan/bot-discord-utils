@@ -53,10 +53,27 @@ export default new Command({
             embeds: [messageEmbed],
             components: [row],
         });
-        console.log(message.id);
         cacheTiminho.set(message.id, {participantes});
 
-        interaction.editReply({content: "mensagem enviada"});
+        setTimeout(() => {
+            const timinho = cacheTiminho.get(message.id);
+            if (!timinho) {
+                console.log("Este sorteio não existe mais no cache!");
+                return;
+            }
+            cacheTiminho.delete(message.id);
+
+            const embed = convertArrayToListString(timinho);
+            embed.title = `${embed.title} - CANCELADO!!!`;
+            embed.description = `TEMPO LIMITE ATINGIDO!\n${embed.description}`;
+
+            message.edit({embeds: [embed], components:[]})
+            .catch(error => {
+                console.log(`Houve um erro ao editar o sorteio após o tempo limite!\n${error}`.red);
+            });
+        }, 1000 * 60 * 5);
+
+        interaction.editReply({content: "Sorteio de time criado! O sorteio expira em 5 minutos se não for sorteado."});
 
     },
     buttons: new Collection([
