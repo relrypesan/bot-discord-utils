@@ -122,9 +122,9 @@ export default new Command({
 
                 time1.push(user);
 
+                participantesArray = Array.from(timinho.participantes.values());
+                keysArray = Array.from(timinho.participantes.keys());
                 if (participantesArray.length != 0) {
-                    participantesArray = Array.from(timinho.participantes.values());
-                    keysArray = Array.from(timinho.participantes.keys());
                     numeroSorteado = Math.floor(Math.random() * keysArray.length);
                     user = participantesArray[numeroSorteado];
     
