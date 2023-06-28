@@ -11,15 +11,15 @@ export async function connect() {
 
         db = client.db(MONGODB_DATABASE);
 
-        console.log('Conexão com o MongoDB estabelecida com sucesso!');
+        console.log('✅ Conexão com o MongoDB estabelecida com sucesso!'.green);
     } catch (error) {
-        console.error('Erro ao conectar-se ao MongoDB:', error);
+        console.error('❌ Erro ao conectar-se ao MongoDB:'.red, error);
     }
 }
 
 export function getDb(): Db {
     if(!db) {
-        throw new Error('Conexão com o MongoDB não estabelecida!');
+        throw new Error('❌ Conexão com o MongoDB não estabelecida!'.red);
     }
     return db;
 }
