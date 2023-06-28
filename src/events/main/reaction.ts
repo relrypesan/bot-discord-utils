@@ -53,13 +53,12 @@ export default new Event({
                     {
                         name: `Cargo:`,
                         value: `${reaction.emoji} - ${roleApprove}`,
+                    },
+                    {
+                        name: `Data e Hora:`,
+                        value: new Date().toISOString(),
                     }
                 ],
-                timestamp: new Date().toISOString(),
-                footer: {
-                    text: `Verificado por ${client.user?.username}`,
-                    icon_url: `https://cdn-icons-png.flaticon.com/512/190/190411.png`
-                },
             };
             
             const row = new ActionRowBuilder<ButtonBuilder>({components:[

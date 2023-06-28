@@ -1,7 +1,8 @@
-import { APIEmbed, ApplicationCommandOptionType, ApplicationCommandType, CacheType, Channel, Collection, CommandInteraction, Emoji, Role, TextChannel } from "discord.js";
+import { APIEmbed, ApplicationCommandOptionType, ApplicationCommandType, ButtonInteraction, CacheType, Channel, Collection, CommandInteraction, Emoji, Guild, Interaction, Role, TextChannel } from "discord.js";
 import { Command } from "../../structs/types/Command";
 import { createRequestRole, getRequestRoleByMessageId, updateRequestRoleById } from "../../services/requestroles";
 import { deleteApproveRoleById, getApproveRoleByMessageId } from "../../services/approveroles";
+import { ApproveRole } from "../../models/approverole";
 
 interface RequestRole {
     cacheSelectChannel?: Channel,
@@ -14,6 +15,38 @@ interface RequestRole {
 }
 
 const cacheRequestRole = new Map<string, RequestRole>();
+
+async function validacaoBotoes(interaction: ButtonInteraction<CacheType>): Promise<ApproveRole | false> {
+    await interaction.deferReply({ephemeral: true});
+    const guild = interaction.guild;
+    if (!guild) {
+        await interaction.editReply({content: "Guild não encontrada!"});
+        return false;
+    }
+    if (!interaction.memberPermissions?.has('Administrator')) {
+        await interaction.editReply({content: "Você precisa ser um administrador para executar este comando!"});
+        return false;
+    }
+    const approverole = await getApproveRoleByMessageId(interaction.message.id);
+    if (!approverole || !approverole._id) {
+        await interaction.editReply({content: "Não foi encontrado esta solicitação!"});
+        return false;
+    }
+
+    approverole.embed.timestamp = new Date().toISOString();
+    approverole.embed.fields?.push({
+        name: `-----------------------`,
+        value: ``,
+    }, {
+        name: `Moderador`,
+        value: `${interaction.user}`,
+    }, {
+        name: `Data e Hora`,
+        value: new Date().toISOString(),
+    });
+
+    return approverole;
+}
 
 export default new Command({
     name: "requestrole",
@@ -167,37 +200,15 @@ export default new Command({
     },
     buttons: new Collection([
         ["approve_roles-aprovar", async (interaction) => {
-            await interaction.deferReply({ephemeral: true});
-            const guild = interaction.guild;
-            if (!guild) {
-                await interaction.editReply({content: "Guild não encontrada!"});
-                return;
-            }
-            if (!interaction.memberPermissions?.has('Administrator')) {
-                await interaction.editReply({content: "Você precisa ser um administrador para executar este comando!"});
-                return;
-            }
-            const approverole = await getApproveRoleByMessageId(interaction.message.id);
-            if (!approverole || !approverole._id) {
-                await interaction.editReply({content: "Não foi encontrado esta solicitação!"});
-                return;
-            }
+            const approverole = await validacaoBotoes(interaction);
+            if (!approverole || !approverole._id) return;
+            const guild = interaction.guild as Guild;
 
             approverole.embed.color = 0x00d830;
             approverole.embed.footer = {
                 text: `Aprovado por: ${interaction.user.username}`,
                 icon_url: `https://cdn-icons-png.flaticon.com/512/190/190411.png`
             }
-            approverole.embed.fields?.push({
-                name: `-----------------------`,
-                value: ``,
-            }, {
-                name: `Moderador`,
-                value: `${interaction.user}`,
-            }, {
-                name: `Data e Hora`,
-                value: new Date().toISOString(),
-            })
 
             interaction.message.edit({embeds: [approverole.embed], components: []});
 
@@ -219,41 +230,14 @@ export default new Command({
             await interaction.editReply({content: "Foi executado"});
         }],
         ["approve_roles-recusar", async (interaction) => {
-            await interaction.deferReply({ephemeral: true});
-            if(!interaction.memberPermissions?.has('Administrator')) {
-                await interaction.editReply({content: "Você precisa ser um administrador para executar este comando!"});
-                return;
-            }
-            const guild = interaction.guild;
-            if (!guild) {
-                await interaction.editReply({content: "Guild não encontrada!"});
-                return;
-            }
-            if (!interaction.memberPermissions?.has('Administrator')) {
-                await interaction.editReply({content: "Você precisa ser um administrador para executar este comando!"});
-                return;
-            }
-            const approverole = await getApproveRoleByMessageId(interaction.message.id);
-            if (!approverole || !approverole._id) {
-                await interaction.editReply({content: "Não foi encontrado esta solicitação!"});
-                return;
-            }
+            const approverole = await validacaoBotoes(interaction);
+            if (!approverole || !approverole._id) return;
 
             approverole.embed.color = 0xd90000;
             approverole.embed.footer = {
                 text: `Recusado por: ${interaction.user.username}`,
                 icon_url: `https://img.freepik.com/icones-gratis/botao-x_318-391115.jpg`
             }
-            approverole.embed.fields?.push({
-                name: `-----------------------`,
-                value: ``,
-            }, {
-                name: `Moderador`,
-                value: `${interaction.user}`,
-            }, {
-                name: `Data e Hora`,
-                value: new Date().toISOString(),
-            })
 
             interaction.message.edit({embeds: [approverole.embed], components: []});
                 
