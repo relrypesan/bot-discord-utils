@@ -39,6 +39,7 @@ export default new Command({
             ]
         }
     ],
+    isAdmin: true,
     async run({interaction, options}) {
         if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
         await interaction.deferReply({ephemeral: true});

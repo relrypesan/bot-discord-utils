@@ -18,7 +18,8 @@ interface CommandComponents {
 }
 
 export type CommandType = ApplicationCommandData & CommandComponents & {
-    run(props: CommandProps): Promise<any>
+    run(props: CommandProps): Promise<any>;
+    isAdmin?: boolean;
 }
 
 export class Command {
