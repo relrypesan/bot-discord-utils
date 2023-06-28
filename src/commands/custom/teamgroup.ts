@@ -1,19 +1,61 @@
 import { APIEmbed, ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, BaseMessageOptions, ButtonBuilder, ButtonStyle, Collection, User } from "discord.js";
 import { Command } from "../../structs/types/Command";
+import { Mutex } from "async-mutex";
 
 interface Timinho {
-    participantes: Map<string,User>
+    mutex: Mutex;
+    participantes: Map<string,User>;
 }
 
 const cacheTiminho = new Map<string, Timinho>();
 
-function convertArrayToListString(timinho: Timinho) : APIEmbed {
-    const array : User[] = Array.from(timinho.participantes.values());
+interface Mapa {
+    nome: string;
+    peso: number;
+}
+
+const mapas: Mapa[] = [
+    // mapas de major
+    { nome: "Inferno", peso: 233 },
+    { nome: "Mirage", peso: 202 },
+    { nome: "Overpass", peso: 190 },
+    { nome: "Ancient", peso: 180 },
+    { nome: "Nuke", peso: 160 },
+    { nome: "Vertigo", peso: 152 },
+    { nome: "Anubis", peso: 116 },
+
+    // outros mapas
+    { nome: "Dust II", peso: 50 },
+    { nome: "Train", peso: 50 },
+    { nome: "Cache", peso: 20 },
+    { nome: "Tuscan", peso: 10 },
+    { nome: "Agency", peso: 10 },
+    { nome: "Office", peso: 10 },
+];
+
+function sorteioMapa(): string {
+    const totalPeso = mapas.reduce((total, item) => total + item.peso, 0);
+    const numeroSorteado = Math.random() * totalPeso;
+
+    let somaPesos = 0;
+    for (const item of mapas) {
+        somaPesos += item.peso;
+
+        if (numeroSorteado <= somaPesos) {
+            return item.nome;
+        }
+    }
+
+    throw new Error(`Erro inesperado, não deveria ocorrer este erro!!!`);
+}
+
+function convertArrayToListString(participantes: Map<string,User>) : APIEmbed {
+    const array : User[] = Array.from(participantes.values());
     let stringJuntas = array.map((user, index) => `${index}. ${user}`).join("\n");
 
     const messageEmbed: APIEmbed = {
         title: "Sorteio de times!",
-        description: `Existem ${timinho.participantes.size} participante(s) no sorteio de times:\n${stringJuntas}`,
+        description: `Existem ${participantes.size} participante(s) no sorteio de times:\n${stringJuntas}`,
     }
 
     return messageEmbed;
@@ -23,13 +65,6 @@ export default new Command({
     name: "timinho",
     description: "sorteia os membros em times",
     type: ApplicationCommandType.ChatInput,
-    // options: [
-    //     {
-    //         name: "quantidade",
-    //         description: "A quantidade de times para sorteio. default: 2",
-    //         type: ApplicationCommandOptionType.Integer,
-    //     }
-    // ],
     async run({interaction, options}) {
         if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
 
@@ -38,7 +73,7 @@ export default new Command({
 
         let participantes: Map<string, User> = new Map([[interaction.user.id, interaction.user]]);
 
-        const messageEmbed = convertArrayToListString({participantes});
+        const messageEmbed = convertArrayToListString(participantes);
 
         const row = new ActionRowBuilder<ButtonBuilder>({components:[
             new ButtonBuilder({
@@ -53,7 +88,7 @@ export default new Command({
             embeds: [messageEmbed],
             components: [row],
         });
-        cacheTiminho.set(message.id, {participantes});
+        cacheTiminho.set(message.id, {participantes, mutex: new Mutex()});
 
         setTimeout(() => {
             const timinho = cacheTiminho.get(message.id);
@@ -63,7 +98,7 @@ export default new Command({
             }
             cacheTiminho.delete(message.id);
 
-            const embed = convertArrayToListString(timinho);
+            const embed = convertArrayToListString(participantes);
             embed.title = `${embed.title} - CANCELADO!!!`;
             embed.description = `TEMPO LIMITE ATINGIDO!\n${embed.description}`;
 
@@ -84,20 +119,26 @@ export default new Command({
                 return;
             }
 
-            let userJaParticipando = timinho.participantes.get(interaction.user.id);
+            // bloqueia evento até liberar a execução em andamento
+            const release = await timinho.mutex.acquire();
+            try {
+                let userJaParticipando = timinho.participantes.get(interaction.user.id);
 
-            if (userJaParticipando) {
-                interaction.reply({ephemeral: true, content: "Você já está participando deste sorteio!"});
-                return
+                if (userJaParticipando) {
+                    interaction.reply({ephemeral: true, content: "Você já está participando deste sorteio!"});
+                    return
+                }
+    
+                timinho.participantes.set(interaction.user.id, interaction.user);
+    
+                const messageEmbed = convertArrayToListString(timinho.participantes);
+    
+                await interaction.reply({ephemeral: true, content: "Agora você está participando deste sorteio!"});
+    
+                interaction.message.edit({embeds: [messageEmbed]});
+            } finally {
+                release();
             }
-
-            timinho.participantes.set(interaction.user.id, interaction.user);
-
-            const messageEmbed = convertArrayToListString(timinho);
-
-            await interaction.reply({ephemeral: true, content: "Agora você está participando deste sorteio!"});
-
-            interaction.message.edit({embeds: [messageEmbed]});
         }],
         ["sortear-button", async (interaction) => {
             const timinho = cacheTiminho.get(interaction.message.id);
@@ -107,7 +148,7 @@ export default new Command({
             }
             cacheTiminho.delete(interaction.message.id);
 
-            const messageEmbed = convertArrayToListString(timinho);
+            const messageEmbed = convertArrayToListString(timinho.participantes);
 
             let time1: User[] = [];
             let time2: User[] = [];
@@ -134,8 +175,9 @@ export default new Command({
                 }
             }
             
-            let stringJuntasTime1 = time1.map((user, index) => `${index}. ${user}`).join("\n");
-            let stringJuntasTime2 = time2.map((user, index) => `${index}. ${user}`).join("\n");
+            const stringJuntasTime1 = time1.map((user, index) => `${index}. ${user}`).join("\n");
+            const stringJuntasTime2 = time2.map((user, index) => `${index}. ${user}`).join("\n");
+            const nomeMapa = sorteioMapa();
 
             messageEmbed.fields = [
                 {
@@ -144,14 +186,19 @@ export default new Command({
                     inline: false
                 },
                 {
-                    name: "Time 1",
+                    name: "Time 1 - CT",
                     value: stringJuntasTime1,
                     inline: true
                 },
                 {
-                    name: "Time 2",
+                    name: "Time 2 - TR",
                     value: stringJuntasTime2,
                     inline: false
+                },
+                {
+                    name: "MAPA",
+                    value: nomeMapa,
+                    inline: true
                 },
             ];
 
