@@ -7,8 +7,8 @@ import { createApproveRole, getApproveRoleByUserIdAndRoleId } from "../../servic
 export default new Event({
     name: "messageReactionAdd",
     async run(reaction, user) {
-        if (reaction.me) {
-            console.log(`reaction.me: ${reaction.me}`);
+        if (user.bot) {
+            console.log(`ignorado reação de bot.`);
             return;
         }
         const guild = await reaction.message.guild;
