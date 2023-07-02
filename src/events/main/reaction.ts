@@ -33,6 +33,12 @@ export default new Event({
                 console.log(`user: ${user.username} já possui uma solicitação ativa para o cargo: ${roleApprove.name}, id: ${roleApprove.id}`);
                 return;
             }
+
+            const member = await guild.members.fetch(user.id);
+            if (member.roles.cache.get(roleApprove.id)) {
+                console.log(`user: ${user.username} - ID: ${user.id} já possui a role: ${roleApprove.name} - ID: ${roleApprove.id}`);
+                return;
+            }
             
             const embed: APIEmbed = {
                 title: `Aprovação`,
