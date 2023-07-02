@@ -35,7 +35,7 @@ export default new Event({
             }
 
             const member = await guild.members.fetch(user.id);
-            if (!member || member.roles.cache.get(roleApprove.id)) {
+            if (member.roles.cache.get(roleApprove.id)) {
                 console.log(`user: ${user.username} - ID: ${user.id} já possui a role: ${roleApprove.name} - ID: ${roleApprove.id}`);
                 return;
             }
