@@ -30,7 +30,7 @@ jobs:
         
       - name: Zip project
         run: |
-          zip -r app.zip * -x .github/* node_modules/*
+          zip -r app.zip * -x node_modules/* .github/*
 
       - name: Deploy to SquareCloud
         run: |
