@@ -1,4 +1,5 @@
-import { APIEmbed, ApplicationCommandOptionType, ApplicationCommandType, ButtonInteraction, CacheType, Channel, Collection, CommandInteraction, Emoji, Guild, Interaction, Role, TextChannel } from "discord.js";
+import { client } from "../..";
+import { APIEmbed, ApplicationCommandOptionType, ApplicationCommandType, ButtonInteraction, CacheType, Channel, Collection, CommandInteraction, Emoji, Guild, GuildMember, Role, TextChannel } from "discord.js";
 import { Command } from "../../structs/types/Command";
 import { createRequestRole, getRequestRoleByMessageId, updateRequestRoleById } from "../../services/requestroles";
 import { deleteApproveRoleById, getApproveRoleByMessageId } from "../../services/approveroles";
@@ -201,7 +202,7 @@ export default new Command({
     buttons: new Collection([
         ["approve_roles-aprovar", async (interaction) => {
             const approverole = await validacaoBotoes(interaction);
-            if (!approverole || !approverole._id) return;
+            if (!approverole || !approverole._id || !client.user) return;
             const guild = interaction.guild as Guild;
 
             approverole.embed.color = 0x00d830;
@@ -210,22 +211,39 @@ export default new Command({
                 icon_url: `https://cdn-icons-png.flaticon.com/512/190/190411.png`
             }
 
-            interaction.message.edit({embeds: [approverole.embed], components: []});
+            let member: GuildMember;
 
-            const member = await guild.members.fetch(approverole.user_id);
+            try {
+                member = await guild.members.fetch(approverole.user_id);
+            } catch (error) {
+                await interaction.editReply({content: "ERRO! Não foi encontrado o usuario, ele pode ter saido do servidor."});
+                return;
+            }
+
+            const memberBot = await guild.members.fetch(client.user.id);
             const role = await guild.roles.fetch(approverole.role_id);
 
-            if (member && role) {
-                member.roles.add(role)
-                    .then(() => {
-                        console.log(`A role ${role.name} foi adicionada para o usuário ${member.user.tag}`);
-                    })
-                    .catch((error) => {
-                        console.error('Erro ao adicionar a role:', error);
-                    });
+            if (!role) {
+                await interaction.editReply({content: "ERRO! Não foi encontrado o cargo, ele pode ter sido deletado."});
+                return;
             }
+            if (memberBot.roles.highest.comparePositionTo(role) <= 0) {
+                await interaction.editReply({content: "ERRO! O Bot precisa ter uma permissão maior que o cargo que ele está tentando gerenciar."});
+                return;
+            }
+
+            member.roles.add(role)
+                .then(() => {
+                    console.log(`A role ${role.name} foi adicionada para o usuário ${member.user.tag}`);
+                })
+                .catch((error) => {
+                    console.log(JSON.stringify(error));
+                    console.error('Erro ao adicionar a role:', error);
+                });
                 
             await deleteApproveRoleById(approverole._id);
+
+            interaction.message.edit({embeds: [approverole.embed], components: []});
 
             await interaction.editReply({content: "Foi executado"});
         }],
