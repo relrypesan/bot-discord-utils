@@ -17,8 +17,8 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: yarn
+      # - name: Install dependencies
+      #   run: yarn
 
       - name: Create .env file
         run: |
@@ -30,11 +30,11 @@ jobs:
         
       - name: Zip project
         run: |
-          zip -r app.zip * -x node_modules/* .github/*
+          zip -r app.zip *
 
       - name: Deploy to SquareCloud
         run: |
           # Coloque aqui os comandos necessários para implantar no SquareCloud
           curl --location 'https://api.squarecloud.app/v2/apps/${{ secrets.SQUARE_CLOUD_APP_ID }}/commit?restart=boolean' \
           --header 'Authorization: ${{ secrets.SQUARE_CLOUD_API_KEY }}' \
-          --form 'file=@"./app.zip"'
+          --form 'file=@"app.zip"'
