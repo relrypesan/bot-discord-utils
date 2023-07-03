@@ -2,7 +2,7 @@ name: Deploy to SquareCloud
 
 on:
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "master" ]
 
 jobs:
   deploy:
@@ -16,9 +16,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-
-      # - name: Install dependencies
-      #   run: yarn
 
       - name: Create .env file
         run: |
