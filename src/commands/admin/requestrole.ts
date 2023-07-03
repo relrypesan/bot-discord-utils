@@ -97,6 +97,25 @@ export default new Command({
                     required: true,
                 }
             ]
+        },
+        {
+            name: "remrole",
+            description: "remove uma role do request",
+            type: ApplicationCommandOptionType.Subcommand,
+            options: [
+                {
+                    name: "message_id",
+                    description: "id da mensagem que será utilizada para remover a role",
+                    type: ApplicationCommandOptionType.String,
+                    required: true,
+                },
+                {
+                    name: "indice",
+                    description: "o indice do cargo que deve ser removido da mensagem, deve ser maior que 0",
+                    type: ApplicationCommandOptionType.Number,
+                    required: true,
+                }
+            ]
         }
     ],
     isAdmin: true,
@@ -104,7 +123,9 @@ export default new Command({
         if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
         await interaction.deferReply({ephemeral: true});
 
-        async function requestRoleCreate(interaction: CommandInteraction<CacheType>, canalRequest: TextChannel, canalAprovacao: TextChannel) {
+        async function requestRoleCreate(interaction: CommandInteraction<CacheType>) {
+            const canalRequest = options.getChannel("canal-request", true) as TextChannel;
+            const canalAprovacao = options.getChannel("canal-aprovacao", true) as TextChannel;
             const embed: APIEmbed = {
                 title: "JOGOS",
                 description: "Selecione os jogos que você joga para que os moderadores liberem os acessos."
@@ -127,7 +148,10 @@ export default new Command({
             });
         }
 
-        async function requestRoleAddRole(interaction: CommandInteraction<CacheType>, message_id: string, role: Role, emoji: string) {
+        async function requestRoleAddRole(interaction: CommandInteraction<CacheType>) {
+            const message_id = options.getString("message_id", true);
+            const role = options.getRole("cargo", true) as Role;
+            const emoji = options.getString("emoji", true);
             const requestMessage = await getRequestRoleByMessageId(message_id);
             if(!requestMessage || !requestMessage._id) {
                 await interaction.editReply({content:"Não foi encontrado esta mensagem na base de dados!"});
@@ -160,8 +184,6 @@ export default new Command({
                 return `${index}. ${value.emoji} - ${value.role}`;
             }).join("\n");
 
-            console.log(JSON.stringify(stringCargos));
-
             const embedMessage: APIEmbed = {
                 ...requestMessage.embed,
                 description: `${requestMessage.embed.description}\n\n${stringCargos}`
@@ -170,7 +192,61 @@ export default new Command({
             message.edit({embeds: [embedMessage]});
             message.react(emoji);
             
-            await interaction.editReply({content: "Cargo adicionado ao requestrole com sucesso!"})
+            await interaction.editReply({content: "Cargo adicionado ao requestrole com sucesso!"});
+        }
+
+        async function requestRoleRemRole(interaction: CommandInteraction<CacheType>) {
+            const message_id = options.getString("message_id", true);
+            const index = options.getNumber("indice", true);
+            const requestMessage = await getRequestRoleByMessageId(message_id);
+            if(!requestMessage || !requestMessage._id) {
+                await interaction.editReply({content:"Não foi encontrado esta mensagem na base de dados!"});
+                return;
+            }
+            if(index <= 0) {
+                await interaction.editReply({content:"valor da mensagem deve ser maior que 0!"});
+                return;
+            }
+
+            const channel = await interaction.guild?.channels.fetch(requestMessage.channel_id) as TextChannel;
+            if (!channel) {
+                throw new Error(`Canal com ID: ${requestMessage.channel_id} não foi encontrado!`);
+            }
+            const message = await channel.messages.fetch(requestMessage.message_id);
+            if (!message) {
+                throw new Error(`Mensagem com ID: ${requestMessage.message_id} não foi encontrada!`);
+            }
+            const reactionRole = requestMessage.reactions.at(index - 1);
+            if (!reactionRole) {
+                await interaction.editReply({content:"AVISO! Não foi encontrado este cargo nesta mensagem!"});
+                return;
+            }
+            
+            const deletedReaction = requestMessage.reactions.splice(index - 1, 1)[0];
+
+            message.reactions.cache
+                .filter((value) => value.emoji.name == deletedReaction.emoji)
+                .each((messageReaction) => messageReaction.remove());
+
+            await updateRequestRoleById(requestMessage._id, requestMessage);
+
+            const arrayReactions = await Promise.all(requestMessage.reactions.map(async(value, index) => {
+                const role = await interaction.guild?.roles.fetch(value.role_id);
+                return {...value, role };
+            }))
+
+            const stringCargos = arrayReactions.map((value, index) => {
+                return `${index}. ${value.emoji} - ${value.role}`;
+            }).join("\n");
+
+            const embedMessage: APIEmbed = {
+                ...requestMessage.embed,
+                description: `${requestMessage.embed.description}\n\n${stringCargos}`
+            }
+
+            message.edit({embeds: [embedMessage]});
+            
+            await interaction.editReply({content: "Cargo removido do requestrole com sucesso!"});
         }
 
         try {
@@ -178,15 +254,13 @@ export default new Command({
     
             switch(subCommand) {
                 case "create":
-                    const canalRequest = options.getChannel("canal-request", true) as TextChannel;
-                    const canalAprovacao = options.getChannel("canal-aprovacao", true) as TextChannel;
-                    await requestRoleCreate(interaction, canalRequest, canalAprovacao);
+                    await requestRoleCreate(interaction);
                     break;
                 case "addrole":
-                    const message_id = options.getString("message_id", true);
-                    const cargo = options.getRole("cargo", true) as Role;
-                    const emoji = options.getString("emoji", true);
-                    await requestRoleAddRole(interaction, message_id, cargo, emoji);
+                    await requestRoleAddRole(interaction);
+                    break;
+                case "remrole":
+                    await requestRoleRemRole(interaction);
                     break;
             }
     

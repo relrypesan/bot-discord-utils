@@ -34,7 +34,6 @@ jobs:
 
       - name: Deploy to SquareCloud
         run: |
-          # Coloque aqui os comandos necessários para implantar no SquareCloud
           curl --location 'https://api.squarecloud.app/v2/apps/${{ secrets.SQUARE_CLOUD_APP_ID }}/commit?restart=boolean' \
           --header 'Authorization: ${{ secrets.SQUARE_CLOUD_API_KEY }}' \
           --form 'file=@"app.zip"'
