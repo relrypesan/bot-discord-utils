@@ -311,7 +311,6 @@ export default new Command({
                     console.log(`A role ${role.name} foi adicionada para o usuário ${member.user.tag}`);
                 })
                 .catch((error) => {
-                    console.log(JSON.stringify(error));
                     console.error('Erro ao adicionar a role:', error);
                 });
                 
