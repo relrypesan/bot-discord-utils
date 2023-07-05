@@ -12,6 +12,11 @@ export default new Event({
 
         const options = interaction.options as CommandInteractionOptionResolver
 
+        if (command.isAdmin && !interaction.memberPermissions?.has('Administrator')) {
+            interaction.reply({ephemeral: true, content: `Você precisa ter um cargo de administrador para executar este comando!`});
+            return;
+        }
+
         command.run({ client, interaction, options })
         .catch(error => {
             console.log(`Houve um erro na execução do comando.\n${error}`.red);

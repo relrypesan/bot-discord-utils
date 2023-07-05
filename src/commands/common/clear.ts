@@ -12,15 +12,11 @@ export default new Command({
             type: ApplicationCommandOptionType.Integer,
         }
     ],
+    isAdmin: true,
     async run({interaction, options}) {
         if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
         await interaction.deferReply({ephemeral: true});
         
-        if(!interaction.memberPermissions.has('Administrator')) {
-            await interaction.editReply({content: "Você precisa ser um administrador para executar este comando!"});
-            return;
-        }
-
         let amount = options.getInteger("quantidade");
 
         if (!amount) amount = 9999999;

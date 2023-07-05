@@ -1,0 +1,36 @@
+name: Deploy to SquareCloud
+
+on:
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Create .env file
+        run: |
+          echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
+          echo "MONGODB_USERNAME=${{ secrets.MONGODB_USERNAME }}" >> .env
+          echo "MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}" >> .env
+          echo "MONGODB_HOST=${{ secrets.MONGODB_HOST }}" >> .env
+          echo "MONGODB_DATABASE=${{ secrets.MONGODB_DATABASE }}" >> .env
+        
+      - name: Zip project
+        run: |
+          zip -r app.zip *
+
+      - name: Deploy to SquareCloud
+        run: |
+          curl --location 'https://api.squarecloud.app/v2/apps/${{ secrets.SQUARE_CLOUD_APP_ID }}/commit?restart=boolean' \
+          --header 'Authorization: ${{ secrets.SQUARE_CLOUD_API_KEY }}' \
+          --form 'file=@"app.zip"'

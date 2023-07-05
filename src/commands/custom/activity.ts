@@ -44,6 +44,7 @@ export default new Command({
             type: ApplicationCommandOptionType.Subcommand
         }
     ],
+    isAdmin: true,
     async run({ client, interaction, options }){
         if (!interaction.inCachedGuild()) return;
 
