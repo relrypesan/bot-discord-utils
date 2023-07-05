@@ -9,7 +9,7 @@ export default new Event({
         if (user.bot) return;
         const guild = await reaction.message.guild;
         if (!guild) return;
-        
+
         const requestrole = await getRequestRoleByMessageId(reaction.message.id);
         if (requestrole) {
             const channelApprove = await reaction.client.channels.fetch(requestrole.channel_approve) as TextChannel | null;
@@ -35,7 +35,7 @@ export default new Event({
                 console.log(`user: ${user.username} - ID: ${user.id} já possui a role: ${roleApprove.name} - ID: ${roleApprove.id}`);
                 return;
             }
-            
+
             const embed: APIEmbed = {
                 title: `Aprovação`,
                 description: `Solicitação de cargo`,
@@ -62,18 +62,20 @@ export default new Event({
                     }
                 ],
             };
-            
-            const row = new ActionRowBuilder<ButtonBuilder>({components:[
-                new ButtonBuilder({
-                    customId: "approve_roles-aprovar", label: "Aprovar", style: ButtonStyle.Success,
-                }),
-                new ButtonBuilder({
-                    customId: "approve_roles-recusar", label: "Recusar", style: ButtonStyle.Danger,
-                }),
-            ]});
 
-            const message = await channelApprove.send({embeds: [embed], components: [row]});
-            
+            const row = new ActionRowBuilder<ButtonBuilder>({
+                components: [
+                    new ButtonBuilder({
+                        customId: "approve_roles-aprovar", label: "Aprovar", style: ButtonStyle.Success,
+                    }),
+                    new ButtonBuilder({
+                        customId: "approve_roles-recusar", label: "Recusar", style: ButtonStyle.Danger,
+                    }),
+                ]
+            });
+
+            const message = await channelApprove.send({ embeds: [embed], components: [row] });
+
             await createApproveRole({
                 guild_id: message.guildId,
                 channel_id: message.channelId,
@@ -82,7 +84,7 @@ export default new Event({
                 role_id: roleApprove.id,
                 user_id: user.id,
             });
-            
+
         }
     },
 })

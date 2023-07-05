@@ -34,7 +34,7 @@ export default new Command({
                     name: "status",
                     description: "status da presença do bot",
                     type: ApplicationCommandOptionType.String,
-                    choices: Object.entries(PresenceUpdateStatus).map(([name, value]) => ({name, value}))
+                    choices: Object.entries(PresenceUpdateStatus).map(([name, value]) => ({ name, value }))
                 }
             ]
         },
@@ -45,22 +45,22 @@ export default new Command({
         }
     ],
     isAdmin: true,
-    async run({ client, interaction, options }){
+    async run({ client, interaction, options }) {
         if (!interaction.inCachedGuild()) return;
 
         const bot = client.user;
-        if (!bot){
-            interaction.reply({ephemeral: true, content: "Ocorreu um erro ao tentar executar esse comando!"});
+        if (!bot) {
+            interaction.reply({ ephemeral: true, content: "Ocorreu um erro ao tentar executar esse comando!" });
             return;
         }
 
-        switch(options.getSubcommand(true)){
-            case "definir":{
+        switch (options.getSubcommand(true)) {
+            case "definir": {
                 const message = options.getString("mensagem", true);
                 const type = options.getNumber("tipo") ?? ActivityType.Playing;
                 const status = (options.getString("status") ?? "online") as PresenceStatusData;
 
-                bot.setPresence({ status, activities: [{name: message, type}] });
+                bot.setPresence({ status, activities: [{ name: message, type }] });
 
                 interaction.reply({
                     ephemeral: true,
@@ -68,7 +68,7 @@ export default new Command({
                 })
                 return;
             }
-            case "limpar":{
+            case "limpar": {
                 bot.setActivity();
                 interaction.reply({ ephemeral: true, content: `A atividade do bot foi limpa!` });
                 return;

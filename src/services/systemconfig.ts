@@ -22,10 +22,10 @@ export async function getSystemConfigByGuildId(guild_id: string): Promise<System
         let result = await collection.findOne({ guild_id: { $eq: guild_id } });
 
         if (!result) {
-            const temp = await createSystemConfig({guild_id}) as SystemConfig;
+            const temp = await createSystemConfig({ guild_id }) as SystemConfig;
             return temp;
         }
-    
+
         return result as SystemConfig;
     } catch (error) {
         console.error('Erro ao obter SystemConfig por guild ID\n'.red, error);
@@ -42,7 +42,7 @@ export async function updateSystemConfigById(id: ObjectId, systemConfig: SystemC
         const update = { $set: systemConfig };
 
         await collection.findOneAndUpdate(filter, update);
-    
+
         return systemConfig as SystemConfig;
     } catch (error) {
         console.error('Erro ao atualizar SystemConfig por ID\n'.red, error);

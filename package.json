@@ -1,6 +1,6 @@
 {
   "name": "mattuto-bot",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MattutoBot é um bot de discord para interação com o usuario e fornecer algumas utilidades.",
   "main": "src/index.ts",
   "scripts": {

@@ -20,7 +20,7 @@ export async function getApproveRoleByMessageId(message_id: string): Promise<App
 
     try {
         const result = await collection.findOne({ message_id: { $eq: message_id } });
-    
+
         return result as ApproveRole | null;
     } catch (error) {
         console.error('Erro ao obter RequestRole por ID\n'.red, error);
@@ -34,7 +34,7 @@ export async function getApproveRoleByUserIdAndRoleId(user_id: string, role_id: 
 
     try {
         const result = await collection.findOne({ user_id: { $eq: user_id }, role_id: { $eq: role_id } });
-    
+
         return result as ApproveRole | null;
     } catch (error) {
         console.error('Erro ao obter RequestRole por user e role id\n'.red, error);
@@ -50,7 +50,7 @@ export async function deleteApproveRoleById(id: ObjectId): Promise<boolean> {
         const filter = { _id: new ObjectId(id) };
 
         await collection.deleteOne(filter);
-    
+
         return true;
     } catch (error) {
         console.error('Erro ao atualizar RequestRole por ID\n'.red, error);

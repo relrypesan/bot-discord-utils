@@ -23,7 +23,7 @@ export type CommandType = ApplicationCommandData & CommandComponents & {
 }
 
 export class Command {
-    constructor(options: CommandType){
+    constructor(options: CommandType) {
         options.dmPermission = false;
         Object.assign(this, options);
     }
