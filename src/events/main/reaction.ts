@@ -1,4 +1,3 @@
-import { client } from "../..";
 import { APIEmbed, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel } from "discord.js";
 import { getRequestRoleByMessageId } from "../../services/requestroles";
 import { Event } from "../../structs/types/Event";
@@ -7,10 +6,7 @@ import { createApproveRole, getApproveRoleByUserIdAndRoleId } from "../../servic
 export default new Event({
     name: "messageReactionAdd",
     async run(reaction, user) {
-        if (user.bot) {
-            console.log(`ignorado reação de bot.`);
-            return;
-        }
+        if (user.bot) return;
         const guild = await reaction.message.guild;
         if (!guild) return;
         
