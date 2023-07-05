@@ -80,10 +80,10 @@ export default new Command({
 
         const row = new ActionRowBuilder<ButtonBuilder>({components:[
             new ButtonBuilder({
-                customId: "participar-button", label: "Participar", style: ButtonStyle.Success,
+                customId: "teamgroup-button-participar", label: "Participar", style: ButtonStyle.Success,
             }),
             new ButtonBuilder({
-                customId: "sortear-button", label: "Sortear", style: ButtonStyle.Secondary,
+                customId: "teamgroup-button-sortear", label: "Sortear", style: ButtonStyle.Secondary,
             }),
         ]});
 
@@ -112,7 +112,7 @@ export default new Command({
 
     },
     buttons: new Collection([
-        ["participar-button", async (interaction) => {
+        ["teamgroup-button-participar", async (interaction) => {
             const timinho = cacheTiminho.get(interaction.message.id);
             if (!timinho) {
                 interaction.reply({ephemeral: true, content: "Este sorteio não foi encontrado ou já aconteceu!"});
@@ -140,7 +140,7 @@ export default new Command({
                 release();
             }
         }],
-        ["sortear-button", async (interaction) => {
+        ["teamgroup-button-sortear", async (interaction) => {
             const timinho = cacheTiminho.get(interaction.message.id);
             if (!timinho) {
                 interaction.reply({ephemeral: true, content: "Este sorteio não foi encontrado ou já aconteceu!"});
@@ -153,8 +153,7 @@ export default new Command({
 
             while(participantes.size != 0) {
                 let participantesArray = Array.from(participantes.values());
-                let keysArray = Array.from(participantes.keys());
-                let numeroSorteado = Math.floor(Math.random() * keysArray.length);
+                let numeroSorteado = Math.floor(Math.random() * participantesArray.length);
                 let user = participantesArray[numeroSorteado];
 
                 participantes.delete(user.id);
@@ -162,9 +161,8 @@ export default new Command({
                 timinho.time1.push(user);
 
                 participantesArray = Array.from(participantes.values());
-                keysArray = Array.from(participantes.keys());
                 if (participantesArray.length != 0) {
-                    numeroSorteado = Math.floor(Math.random() * keysArray.length);
+                    numeroSorteado = Math.floor(Math.random() * participantesArray.length);
                     user = participantesArray[numeroSorteado];
     
                     participantes.delete(user.id);

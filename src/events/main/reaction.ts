@@ -1,4 +1,3 @@
-import { client } from "../..";
 import { APIEmbed, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel } from "discord.js";
 import { getRequestRoleByMessageId } from "../../services/requestroles";
 import { Event } from "../../structs/types/Event";

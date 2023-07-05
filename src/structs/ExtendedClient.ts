@@ -63,7 +63,6 @@ export class ExtendedClient extends Client {
     private registerEvents(){
         const eventsPath = path.join(__dirname, "..", "events");
 
-
         fs.readdirSync(eventsPath).forEach(local => {
 
             fs.readdirSync(`${eventsPath}/${local}`).filter(fileCondition)
