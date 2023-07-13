@@ -148,7 +148,11 @@ export default new Command({
                 interaction.reply({ ephemeral: true, content: "Este sorteio não foi encontrado ou já aconteceu!" });
                 return;
             }
-            // cacheTiminho.delete(interaction.message.id);
+            let participantesArray = Array.from(timinho.participantes.values());
+            if (participantesArray[0].id !== interaction.user.id) {
+                interaction.reply({ ephemeral: true, content: "Somente quem criou o sorteio pode sortear!" });
+                return;
+            }
 
             const messageEmbed = convertArrayToListString(timinho.participantes);
             const participantes = new Map(timinho.participantes);
@@ -223,6 +227,11 @@ export default new Command({
                 interaction.reply({ ephemeral: true, content: "Este sorteio não foi encontrado ou já aconteceu!" });
                 return;
             }
+            let participantesArray = Array.from(timinho.participantes.values());
+            if (participantesArray[0].id !== interaction.user.id) {
+                interaction.reply({ ephemeral: true, content: "Somente quem criou o sorteio pode iniciar!" });
+                return;
+            }
 
             const config = await getSystemConfigByGuildId(interaction.guildId || "");
             const guild = interaction.guild;
@@ -269,6 +278,11 @@ export default new Command({
             const timinho = cacheTiminho.get(interaction.message.id);
             if (!timinho) {
                 interaction.reply({ ephemeral: true, content: "Este sorteio não foi encontrado ou já aconteceu!" });
+                return;
+            }
+            let participantesArray = Array.from(timinho.participantes.values());
+            if (participantesArray[0].id !== interaction.user.id) {
+                interaction.reply({ ephemeral: true, content: "Somente quem criou o sorteio pode finalizar!" });
                 return;
             }
 
