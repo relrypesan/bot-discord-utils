@@ -47,9 +47,9 @@ export default new Command({
         //     return;
         // }
 
+        const maxValue = options.getInteger("quantidade", false) || 5;
         new Promise(async () => {
             const initialVoiceChannel = guildMember.voice.channel;
-            const maxValue = options.getInteger("quantidade", false) || 5;
 
             for (let count = 0; count < maxValue; count++) {
                 let guildMemberLocal = guild.members.cache.find((m) => m.id === user.id) as GuildMember | undefined;
@@ -72,6 +72,7 @@ export default new Command({
                 .catch(() => { });
         })
 
+        console.log(`O usuario: '${interaction.user.username}' está trolando o usuario: '${guildMember.user.username}' por ${maxValue} vezes.`);
         interaction.reply({ ephemeral: true, content: "Seu amiguinho está sendo trolado! XD" });
 
     }

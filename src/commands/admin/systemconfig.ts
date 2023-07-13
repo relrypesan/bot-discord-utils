@@ -32,6 +32,19 @@ export default new Command({
                 }
             ]
         },
+        {
+            name: "server",
+            description: "configurações do servidor",
+            type: ApplicationCommandOptionType.Subcommand,
+            options: [
+                {
+                    name: "canal-global",
+                    description: "configura o canal global onde um membro @everyone tenha acesso",
+                    type: ApplicationCommandOptionType.Channel,
+                    required: false
+                },
+            ]
+        },
     ],
     isAdmin: true,
     async run({ interaction, options }) {
@@ -71,7 +84,32 @@ export default new Command({
                 }
             });
 
+            console.log(`Configurações dos canais teamgroup salvo com sucesso por: ${interaction.user.username}`);
             await interaction.editReply({ content: "Sucesso! Todos os canais foram configurados." });
+        }
+
+        async function systemConfigServer(interaction: CommandInteraction<CacheType>) {
+            const canalGlobal = options.getChannel("canal-global");
+
+            const systemConfigGuild = await getSystemConfigByGuildId(interaction.guildId || "");
+            if (!systemConfigGuild || !systemConfigGuild._id) {
+                await interaction.editReply({ content: "Erro inesperado ao buscar system_config da guild!" });
+                return;
+            }
+
+            if (canalGlobal) {
+                if (canalGlobal.type !== ChannelType.GuildText) {
+                    await interaction.editReply({ content: "ERRO! 'canal-global' deve ser um canal de texto!" });
+                    return;
+                }
+                await updateSystemConfigById(systemConfigGuild._id, {
+                    ...systemConfigGuild,
+                    channel_id_global: canalGlobal.id
+                });
+            }
+
+            console.log(`Configurações do servidor salvo com sucesso por: ${interaction.user.username}`);
+            await interaction.editReply({ content: "Sucesso! Configurações do servidor salva." });
         }
 
         try {
@@ -80,6 +118,9 @@ export default new Command({
             switch (subCommand) {
                 case "teamgroup":
                     await systemConfigTeamGroup(interaction);
+                    break;
+                case "server":
+                    await systemConfigServer(interaction);
                     break;
             }
 

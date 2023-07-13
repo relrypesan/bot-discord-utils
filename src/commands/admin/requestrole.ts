@@ -4,6 +4,7 @@ import { Command } from "../../structs/types/Command";
 import { createRequestRole, getRequestRoleByMessageId, updateRequestRoleById } from "../../services/requestroles";
 import { deleteApproveRoleById, getApproveRoleByMessageId } from "../../services/approveroles";
 import { ApproveRole } from "../../models/approverole";
+import { getSystemConfigByGuildId } from "../../services/systemconfig";
 
 interface RequestRole {
     cacheSelectChannel?: Channel,
@@ -307,8 +308,34 @@ export default new Command({
             }
 
             member.roles.add(role)
-                .then(() => {
-                    console.log(`A role ${role.name} foi adicionada para o usuário ${member.user.tag}`);
+                .then(async() => {
+                    console.log(`O moderador: ${interaction.user.username} aprovou a role ${role.name} para o usuário ${member.user.username}`);
+                    let systemconfig;
+
+                    try {
+                        systemconfig = await getSystemConfigByGuildId(guild.id);
+                    } catch (error) {}
+
+                    const embed: APIEmbed = {
+                        title: `Cargo Aprovado!`,
+                        color: 0x00EE00,
+                        description: `O cargo: **${role.name}** foi aprovado por um moderador, agora aproveite os canais dos seus jogos favoritos 😍`,
+                        thumbnail: {
+                            url: `https://cdn.discordapp.com/attachments/1126653446720847912/1126653637796577371/MATTUTOS-v2.jpg`
+                        },
+                        timestamp: new Date().toISOString(),
+                        footer: {
+                            text: `Aprovado por: ${interaction.user.username}`
+                        }
+                    }
+
+                    if (systemconfig && systemconfig.channel_id_global) {
+                        const linkChannelGlobal = `https://discord.com/channels/${systemconfig.guild_id}/${systemconfig.channel_id_global}`;
+                        embed.url = linkChannelGlobal;
+                        embed.description = `${embed.description}\n\nConfira:\n${embed.url}\n`;
+                    }
+
+                    member.user.send({embeds: [embed]})
                 })
                 .catch((error) => {
                     console.error('Erro ao adicionar a role:', error);
