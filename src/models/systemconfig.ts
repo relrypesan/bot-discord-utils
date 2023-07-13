@@ -9,5 +9,6 @@ export interface TeamGroup {
 export interface SystemConfig extends Document {
     _id?: ObjectId;
     guild_id: string;
+    channel_id_global?: string;
     teamgroup?: TeamGroup;
 }

@@ -22,7 +22,7 @@ export default new Command({
         },
     ],
     isAdmin: true,
-    async run({ interaction, options }){
+    async run({ interaction, options }) {
         const guild = interaction.guild;
         if (!interaction.inCachedGuild() || !guild) return;
 
@@ -31,7 +31,7 @@ export default new Command({
             .map((channel) => channel as VoiceChannel);
 
         if (voiceChannels.length <= 1) {
-            interaction.reply({ephemeral: true, content: "O servidor precisa ter mais de 1 canal de voz para que este comando funcione!"});
+            interaction.reply({ ephemeral: true, content: "O servidor precisa ter mais de 1 canal de voz para que este comando funcione!" });
             return;
         }
 
@@ -39,7 +39,7 @@ export default new Command({
         const guildMember = guild.members.cache.find((m) => m.id === user.id) as GuildMember | undefined;
 
         if (!guildMember) {
-            interaction.reply({ephemeral: true, content: "Erro! Não foi possivel encontrar o membro no servidor."});
+            interaction.reply({ ephemeral: true, content: "Erro! Não foi possivel encontrar o membro no servidor." });
             return;
         }
         // if (guildMember.permissions.has('Administrator')) {
@@ -47,32 +47,33 @@ export default new Command({
         //     return;
         // }
 
+        const maxValue = options.getInteger("quantidade", false) || 5;
         new Promise(async () => {
             const initialVoiceChannel = guildMember.voice.channel;
-            const maxValue = options.getInteger("quantidade", false) || 5;
 
             for (let count = 0; count < maxValue; count++) {
                 let guildMemberLocal = guild.members.cache.find((m) => m.id === user.id) as GuildMember | undefined;
                 if (!guildMemberLocal) continue;
 
                 const currentVoiceChannel = guildMemberLocal.voice.channel;
-                
+
                 let targetVoiceChannel
                 do {
                     targetVoiceChannel = voiceChannels.at(Math.floor(Math.random() * voiceChannels.length));
                 } while (!targetVoiceChannel || targetVoiceChannel.id === currentVoiceChannel?.id);
 
                 await guildMember.voice.setChannel(targetVoiceChannel)
-                    .catch( () => {});
-            
+                    .catch(() => { });
+
                 await new Promise(resolve => setTimeout(resolve, 800));
             }
 
             await guildMember.voice.setChannel(initialVoiceChannel)
-                .catch( () => {});
+                .catch(() => { });
         })
 
-        interaction.reply({ephemeral: true, content: "Seu amiguinho está sendo trolado! XD"});
+        console.log(`O usuario: '${interaction.user.username}' está trolando o usuario: '${guildMember.user.username}' por ${maxValue} vezes.`);
+        interaction.reply({ ephemeral: true, content: "Seu amiguinho está sendo trolado! XD" });
 
     }
 })

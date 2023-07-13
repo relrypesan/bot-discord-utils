@@ -4,6 +4,7 @@ import { Command } from "../../structs/types/Command";
 import { createRequestRole, getRequestRoleByMessageId, updateRequestRoleById } from "../../services/requestroles";
 import { deleteApproveRoleById, getApproveRoleByMessageId } from "../../services/approveroles";
 import { ApproveRole } from "../../models/approverole";
+import { getSystemConfigByGuildId } from "../../services/systemconfig";
 
 interface RequestRole {
     cacheSelectChannel?: Channel,
@@ -18,19 +19,19 @@ interface RequestRole {
 const cacheRequestRole = new Map<string, RequestRole>();
 
 async function validacaoBotoes(interaction: ButtonInteraction<CacheType>): Promise<ApproveRole | false> {
-    await interaction.deferReply({ephemeral: true});
+    await interaction.deferReply({ ephemeral: true });
     const guild = interaction.guild;
     if (!guild) {
-        await interaction.editReply({content: "Guild não encontrada!"});
+        await interaction.editReply({ content: "Guild não encontrada!" });
         return false;
     }
     if (!interaction.memberPermissions?.has('Administrator')) {
-        await interaction.editReply({content: "Você precisa ser um administrador para executar este comando!"});
+        await interaction.editReply({ content: "Você precisa ser um administrador para executar este comando!" });
         return false;
     }
     const approverole = await getApproveRoleByMessageId(interaction.message.id);
     if (!approverole || !approverole._id) {
-        await interaction.editReply({content: "Não foi encontrado esta solicitação!"});
+        await interaction.editReply({ content: "Não foi encontrado esta solicitação!" });
         return false;
     }
 
@@ -119,9 +120,9 @@ export default new Command({
         }
     ],
     isAdmin: true,
-    async run({interaction, options}) {
+    async run({ interaction, options }) {
         if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
-        await interaction.deferReply({ephemeral: true});
+        await interaction.deferReply({ ephemeral: true });
 
         async function requestRoleCreate(interaction: CommandInteraction<CacheType>) {
             const canalRequest = options.getChannel("canal-request", true) as TextChannel;
@@ -130,7 +131,7 @@ export default new Command({
                 title: "JOGOS",
                 description: "Selecione os jogos que você joga para que os moderadores liberem os acessos."
             }
-            const message = await canalRequest.send({embeds:[embed]});
+            const message = await canalRequest.send({ embeds: [embed] });
 
             await createRequestRole({
                 guild_id: canalRequest.guildId,
@@ -140,12 +141,12 @@ export default new Command({
                 embed,
                 reactions: [],
             })
-            .then(async () => {
-                await interaction.editReply({content: "Mensagem enviada e cadastrada na base de dados!"});
-            })
-            .catch(async () => {
-                await interaction.editReply({content: "Houve um ERRO ao cadastra os dados na base de dados!"});
-            });
+                .then(async () => {
+                    await interaction.editReply({ content: "Mensagem enviada e cadastrada na base de dados!" });
+                })
+                .catch(async () => {
+                    await interaction.editReply({ content: "Houve um ERRO ao cadastra os dados na base de dados!" });
+                });
         }
 
         async function requestRoleAddRole(interaction: CommandInteraction<CacheType>) {
@@ -153,8 +154,8 @@ export default new Command({
             const role = options.getRole("cargo", true) as Role;
             const emoji = options.getString("emoji", true);
             const requestMessage = await getRequestRoleByMessageId(message_id);
-            if(!requestMessage || !requestMessage._id) {
-                await interaction.editReply({content:"Não foi encontrado esta mensagem na base de dados!"});
+            if (!requestMessage || !requestMessage._id) {
+                await interaction.editReply({ content: "Não foi encontrado esta mensagem na base de dados!" });
                 return;
             }
 
@@ -168,16 +169,16 @@ export default new Command({
             }
 
             if (requestMessage.reactions.filter(value => value.emoji === emoji).length > 0) {
-                await interaction.editReply({content: "ERRO: já existe este emoji como reação"});
+                await interaction.editReply({ content: "ERRO: já existe este emoji como reação" });
                 return;
             }
 
-            requestMessage.reactions.push({role_id: role.id, emoji});
+            requestMessage.reactions.push({ role_id: role.id, emoji });
             await updateRequestRoleById(requestMessage._id, requestMessage);
 
-            const arrayReactions = await Promise.all(requestMessage.reactions.map(async(value, index) => {
+            const arrayReactions = await Promise.all(requestMessage.reactions.map(async (value, index) => {
                 const role = await interaction.guild?.roles.fetch(value.role_id);
-                return {...value, role };
+                return { ...value, role };
             }))
 
             const stringCargos = arrayReactions.map((value, index) => {
@@ -189,22 +190,22 @@ export default new Command({
                 description: `${requestMessage.embed.description}\n\n${stringCargos}`
             }
 
-            message.edit({embeds: [embedMessage]});
+            message.edit({ embeds: [embedMessage] });
             message.react(emoji);
-            
-            await interaction.editReply({content: "Cargo adicionado ao requestrole com sucesso!"});
+
+            await interaction.editReply({ content: "Cargo adicionado ao requestrole com sucesso!" });
         }
 
         async function requestRoleRemRole(interaction: CommandInteraction<CacheType>) {
             const message_id = options.getString("message_id", true);
             const index = options.getNumber("indice", true);
             const requestMessage = await getRequestRoleByMessageId(message_id);
-            if(!requestMessage || !requestMessage._id) {
-                await interaction.editReply({content:"Não foi encontrado esta mensagem na base de dados!"});
+            if (!requestMessage || !requestMessage._id) {
+                await interaction.editReply({ content: "Não foi encontrado esta mensagem na base de dados!" });
                 return;
             }
-            if(index <= 0) {
-                await interaction.editReply({content:"valor da mensagem deve ser maior que 0!"});
+            if (index <= 0) {
+                await interaction.editReply({ content: "valor da mensagem deve ser maior que 0!" });
                 return;
             }
 
@@ -218,10 +219,10 @@ export default new Command({
             }
             const reactionRole = requestMessage.reactions.at(index - 1);
             if (!reactionRole) {
-                await interaction.editReply({content:"AVISO! Não foi encontrado este cargo nesta mensagem!"});
+                await interaction.editReply({ content: "AVISO! Não foi encontrado este cargo nesta mensagem!" });
                 return;
             }
-            
+
             const deletedReaction = requestMessage.reactions.splice(index - 1, 1)[0];
 
             message.reactions.cache
@@ -230,9 +231,9 @@ export default new Command({
 
             await updateRequestRoleById(requestMessage._id, requestMessage);
 
-            const arrayReactions = await Promise.all(requestMessage.reactions.map(async(value, index) => {
+            const arrayReactions = await Promise.all(requestMessage.reactions.map(async (value, index) => {
                 const role = await interaction.guild?.roles.fetch(value.role_id);
-                return {...value, role };
+                return { ...value, role };
             }))
 
             const stringCargos = arrayReactions.map((value, index) => {
@@ -244,15 +245,15 @@ export default new Command({
                 description: `${requestMessage.embed.description}\n\n${stringCargos}`
             }
 
-            message.edit({embeds: [embedMessage]});
-            
-            await interaction.editReply({content: "Cargo removido do requestrole com sucesso!"});
+            message.edit({ embeds: [embedMessage] });
+
+            await interaction.editReply({ content: "Cargo removido do requestrole com sucesso!" });
         }
 
         try {
             const subCommand = options.getSubcommand();
-    
-            switch(subCommand) {
+
+            switch (subCommand) {
                 case "create":
                     await requestRoleCreate(interaction);
                     break;
@@ -263,13 +264,13 @@ export default new Command({
                     await requestRoleRemRole(interaction);
                     break;
             }
-    
-            if ( !interaction.replied ) {
-                await interaction.editReply({content: "Executado com sucesso!"});
+
+            if (!interaction.replied) {
+                await interaction.editReply({ content: "Executado com sucesso!" });
             }
         } catch (error) {
-            if ( !interaction.replied ) {
-                await interaction.editReply({content: "Houve um ERRO na execução do comando!"});
+            if (!interaction.replied) {
+                await interaction.editReply({ content: "Houve um ERRO na execução do comando!" });
             }
         }
     },
@@ -290,7 +291,7 @@ export default new Command({
             try {
                 member = await guild.members.fetch(approverole.user_id);
             } catch (error) {
-                await interaction.editReply({content: "ERRO! Não foi encontrado o usuario, ele pode ter saido do servidor."});
+                await interaction.editReply({ content: "ERRO! Não foi encontrado o usuario, ele pode ter saido do servidor." });
                 return;
             }
 
@@ -298,27 +299,53 @@ export default new Command({
             const role = await guild.roles.fetch(approverole.role_id);
 
             if (!role) {
-                await interaction.editReply({content: "ERRO! Não foi encontrado o cargo, ele pode ter sido deletado."});
+                await interaction.editReply({ content: "ERRO! Não foi encontrado o cargo, ele pode ter sido deletado." });
                 return;
             }
             if (memberBot.roles.highest.comparePositionTo(role) <= 0) {
-                await interaction.editReply({content: "ERRO! O Bot precisa ter uma permissão maior que o cargo que ele está tentando gerenciar."});
+                await interaction.editReply({ content: "ERRO! O Bot precisa ter uma permissão maior que o cargo que ele está tentando gerenciar." });
                 return;
             }
 
             member.roles.add(role)
-                .then(() => {
-                    console.log(`A role ${role.name} foi adicionada para o usuário ${member.user.tag}`);
+                .then(async() => {
+                    console.log(`O moderador: ${interaction.user.username} aprovou a role ${role.name} para o usuário ${member.user.username}`);
+                    let systemconfig;
+
+                    try {
+                        systemconfig = await getSystemConfigByGuildId(guild.id);
+                    } catch (error) {}
+
+                    const embed: APIEmbed = {
+                        title: `Cargo Aprovado!`,
+                        color: 0x00EE00,
+                        description: `O cargo: **${role.name}** foi aprovado por um moderador, agora aproveite os canais dos seus jogos favoritos 😍`,
+                        thumbnail: {
+                            url: `https://cdn.discordapp.com/attachments/1126653446720847912/1126653637796577371/MATTUTOS-v2.jpg`
+                        },
+                        timestamp: new Date().toISOString(),
+                        footer: {
+                            text: `Aprovado por: ${interaction.user.username}`
+                        }
+                    }
+
+                    if (systemconfig && systemconfig.channel_id_global) {
+                        const linkChannelGlobal = `https://discord.com/channels/${systemconfig.guild_id}/${systemconfig.channel_id_global}`;
+                        embed.url = linkChannelGlobal;
+                        embed.description = `${embed.description}\n\nConfira:\n${embed.url}\n`;
+                    }
+
+                    member.user.send({embeds: [embed]})
                 })
                 .catch((error) => {
                     console.error('Erro ao adicionar a role:', error);
                 });
-                
+
             await deleteApproveRoleById(approverole._id);
 
-            interaction.message.edit({embeds: [approverole.embed], components: []});
+            interaction.message.edit({ embeds: [approverole.embed], components: [] });
 
-            await interaction.editReply({content: "Foi executado"});
+            await interaction.editReply({ content: "Foi executado" });
         }],
         ["approve_roles-recusar", async (interaction) => {
             const approverole = await validacaoBotoes(interaction);
@@ -330,11 +357,11 @@ export default new Command({
                 icon_url: `https://img.freepik.com/icones-gratis/botao-x_318-391115.jpg`
             }
 
-            interaction.message.edit({embeds: [approverole.embed], components: []});
-                
+            interaction.message.edit({ embeds: [approverole.embed], components: [] });
+
             await deleteApproveRoleById(approverole._id);
 
-            await interaction.editReply({content: "Foi executado"});
+            await interaction.editReply({ content: "Foi executado" });
         }],
     ]),
 })

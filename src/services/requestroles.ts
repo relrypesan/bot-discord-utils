@@ -20,7 +20,7 @@ export async function getRequestRoleByMessageId(message_id: string): Promise<Req
 
     try {
         const result = await collection.findOne({ message_id: { $eq: message_id } });
-    
+
         return result as RequestRole | null;
     } catch (error) {
         console.error('Erro ao obter RequestRole por ID\n'.red, error);
@@ -37,7 +37,7 @@ export async function updateRequestRoleById(id: ObjectId, requestrole: RequestRo
         const update = { $set: requestrole };
 
         await collection.findOneAndUpdate(filter, update);
-    
+
         return requestrole as RequestRole;
     } catch (error) {
         console.error('Erro ao atualizar RequestRole por ID\n'.red, error);

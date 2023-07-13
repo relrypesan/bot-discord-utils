@@ -32,33 +32,46 @@ export default new Command({
                 }
             ]
         },
+        {
+            name: "server",
+            description: "configurações do servidor",
+            type: ApplicationCommandOptionType.Subcommand,
+            options: [
+                {
+                    name: "canal-global",
+                    description: "configura o canal global onde um membro @everyone tenha acesso",
+                    type: ApplicationCommandOptionType.Channel,
+                    required: false
+                },
+            ]
+        },
     ],
     isAdmin: true,
-    async run({interaction, options}) {
+    async run({ interaction, options }) {
         if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
-        await interaction.deferReply({ephemeral: true});
+        await interaction.deferReply({ ephemeral: true });
 
         async function systemConfigTeamGroup(interaction: CommandInteraction<CacheType>) {
             const canalEspera = options.getChannel("canal-espera", true);
             const canalTime1 = options.getChannel("canal-time-1", true);
             const canalTime2 = options.getChannel("canal-time-2", true);
-            
+
             if (canalEspera.type !== ChannelType.GuildVoice) {
-                await interaction.editReply({content: "ERRO! 'canal-espera' deve ser um canal de voz!"});
+                await interaction.editReply({ content: "ERRO! 'canal-espera' deve ser um canal de voz!" });
                 return;
             }
             if (canalTime1.type !== ChannelType.GuildVoice) {
-                await interaction.editReply({content: "ERRO! 'canal-time-1' deve ser um canal de voz!"});
+                await interaction.editReply({ content: "ERRO! 'canal-time-1' deve ser um canal de voz!" });
                 return;
             }
             if (canalTime2.type !== ChannelType.GuildVoice) {
-                await interaction.editReply({content: "ERRO! 'canal-time-2' deve ser um canal de voz!"});
+                await interaction.editReply({ content: "ERRO! 'canal-time-2' deve ser um canal de voz!" });
                 return;
             }
 
             const systemConfigGuild = await getSystemConfigByGuildId(interaction.guildId || "");
             if (!systemConfigGuild || !systemConfigGuild._id) {
-                await interaction.editReply({content: "Erro inesperado ao buscar system_config da guild!"});
+                await interaction.editReply({ content: "Erro inesperado ao buscar system_config da guild!" });
                 return;
             }
 
@@ -70,25 +83,53 @@ export default new Command({
                     channel_id_team2: canalTime2.id
                 }
             });
-            
-            await interaction.editReply({content: "Sucesso! Todos os canais foram configurados."});
+
+            console.log(`Configurações dos canais teamgroup salvo com sucesso por: ${interaction.user.username}`);
+            await interaction.editReply({ content: "Sucesso! Todos os canais foram configurados." });
+        }
+
+        async function systemConfigServer(interaction: CommandInteraction<CacheType>) {
+            const canalGlobal = options.getChannel("canal-global");
+
+            const systemConfigGuild = await getSystemConfigByGuildId(interaction.guildId || "");
+            if (!systemConfigGuild || !systemConfigGuild._id) {
+                await interaction.editReply({ content: "Erro inesperado ao buscar system_config da guild!" });
+                return;
+            }
+
+            if (canalGlobal) {
+                if (canalGlobal.type !== ChannelType.GuildText) {
+                    await interaction.editReply({ content: "ERRO! 'canal-global' deve ser um canal de texto!" });
+                    return;
+                }
+                await updateSystemConfigById(systemConfigGuild._id, {
+                    ...systemConfigGuild,
+                    channel_id_global: canalGlobal.id
+                });
+            }
+
+            console.log(`Configurações do servidor salvo com sucesso por: ${interaction.user.username}`);
+            await interaction.editReply({ content: "Sucesso! Configurações do servidor salva." });
         }
 
         try {
             const subCommand = options.getSubcommand();
-    
-            switch(subCommand) {
+
+            switch (subCommand) {
                 case "teamgroup":
                     await systemConfigTeamGroup(interaction);
                     break;
+                case "server":
+                    await systemConfigServer(interaction);
+                    break;
             }
-    
-            if ( !interaction.replied ) {
-                await interaction.editReply({content: "Executado com sucesso!"});
+
+            if (!interaction.replied) {
+                await interaction.editReply({ content: "Executado com sucesso!" });
             }
         } catch (error) {
-            if ( !interaction.replied ) {
-                await interaction.editReply({content: "Houve um ERRO na execução do comando!"});
+            if (!interaction.replied) {
+                await interaction.editReply({ content: "Houve um ERRO na execução do comando!" });
             }
         }
     },
