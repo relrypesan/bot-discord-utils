@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { CommandType, ComponentsButton, ComponentsModal, ComponentsSelect } from "./types/Command";
 import { EventType } from "./types/Event";
+import { Scheduler } from "./types/Scheduler";
 dotenv.config();
 
 const fileCondition = (fileName: string) => fileName.endsWith(".ts") || fileName.endsWith(".js");
@@ -25,6 +26,7 @@ export class ExtendedClient extends Client {
         this.registerModules();
         this.registerEvents();
         this.login(process.env.BOT_TOKEN);
+        this.registerSchedulers();
     }
     private registerCommands(commands: Array<ApplicationCommandDataResolvable>) {
         this.application?.commands.set(commands)
@@ -41,9 +43,7 @@ export class ExtendedClient extends Client {
         const commandsPath = path.join(__dirname, "..", "commands");
 
         fs.readdirSync(commandsPath).forEach(local => {
-
             fs.readdirSync(commandsPath + `/${local}/`).filter(fileCondition).forEach(async fileName => {
-
                 const command: CommandType = (await import(`../commands/${local}/${fileName}`))?.default;
                 const { name, buttons, selects, modals } = command
 
@@ -77,5 +77,23 @@ export class ExtendedClient extends Client {
                 })
 
         })
+    }
+    private registerSchedulers() {
+        console.log(`Iniciando Schedulers...`);
+        const schedulersPath = path.join(__dirname, "..", "schedulers");
+
+        fs.readdirSync(schedulersPath).forEach(local => {
+            fs.readdirSync(schedulersPath + `/${local}/`).filter(fileCondition).forEach(async fileName => {
+                const scheduler: Scheduler = (await import(`../schedulers/${local}/${fileName}`))?.default;
+                const { name, execute, wait_start, run} = scheduler
+
+                console.log(`O scheduler: ${name} será iniciado em ${wait_start} segundos`);
+                
+                setTimeout(() => {
+                    // execute(this);
+                    run({client: this});
+                }, wait_start * 1000);
+            });
+        });
     }
 }
