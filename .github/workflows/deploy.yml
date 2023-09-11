@@ -24,6 +24,7 @@ jobs:
           echo "MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}" >> .env
           echo "MONGODB_HOST=${{ secrets.MONGODB_HOST }}" >> .env
           echo "MONGODB_DATABASE=${{ secrets.MONGODB_DATABASE }}" >> .env
+          ls
         
       - name: Zip project
         run: |
