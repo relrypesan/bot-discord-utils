@@ -19,15 +19,18 @@ jobs:
 
       - name: Create .env file
         run: |
+          pwd
           echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
           echo "MONGODB_USERNAME=${{ secrets.MONGODB_USERNAME }}" >> .env
           echo "MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}" >> .env
           echo "MONGODB_HOST=${{ secrets.MONGODB_HOST }}" >> .env
           echo "MONGODB_DATABASE=${{ secrets.MONGODB_DATABASE }}" >> .env
+          pwd
           ls
         
       - name: Zip project
         run: |
+          pwd
           zip -r app.zip *
 
       - name: Deploy to SquareCloud
