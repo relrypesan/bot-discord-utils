@@ -16,7 +16,12 @@ export default new Event({
             if (!channelApprove) {
                 throw new Error(`Houve um erro ao gerar a solicitação de cargo, o canal não existe ou o bot não tem permissão. ID: ${requestrole.channel_approve}`);
             }
-            const roleReaction = await requestrole.reactions.filter(item => item.emoji === reaction.emoji.name)[0];
+            const roleReaction = await requestrole.reactions.filter(item => {
+                if (reaction.emoji.id != null) { // Trata emojis criados pelo servidor
+                    return `<:${reaction.emoji.name}:${reaction.emoji.id}>` == item.emoji
+                }
+                return reaction.emoji.name == item.emoji
+            })[0];
             if (!roleReaction) {
                 throw new Error(`Não foi encontrado este emoji na base: ${reaction.emoji.name}`);
             }
