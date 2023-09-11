@@ -27,7 +27,7 @@ jobs:
         
       - name: Zip project
         run: |
-          zip -r app.zip *
+          zip -r app.zip * .env
 
       - name: Deploy to SquareCloud
         run: |

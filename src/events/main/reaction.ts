@@ -1,4 +1,3 @@
-import { client } from "../..";
 import { APIEmbed, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel } from "discord.js";
 import { getRequestRoleByMessageId } from "../../services/requestroles";
 import { Event } from "../../structs/types/Event";
@@ -7,20 +6,22 @@ import { createApproveRole, getApproveRoleByUserIdAndRoleId } from "../../servic
 export default new Event({
     name: "messageReactionAdd",
     async run(reaction, user) {
-        if (user.bot) {
-            console.log(`ignorado reação de bot.`);
-            return;
-        }
+        if (user.bot) return;
         const guild = await reaction.message.guild;
         if (!guild) return;
-        
+
         const requestrole = await getRequestRoleByMessageId(reaction.message.id);
         if (requestrole) {
             const channelApprove = await reaction.client.channels.fetch(requestrole.channel_approve) as TextChannel | null;
             if (!channelApprove) {
                 throw new Error(`Houve um erro ao gerar a solicitação de cargo, o canal não existe ou o bot não tem permissão. ID: ${requestrole.channel_approve}`);
             }
-            const roleReaction = await requestrole.reactions.filter(item => item.emoji === reaction.emoji.name)[0];
+            const roleReaction = await requestrole.reactions.filter(item => {
+                if (reaction.emoji.id != null) { // Trata emojis criados pelo servidor
+                    return `<:${reaction.emoji.name}:${reaction.emoji.id}>` == item.emoji
+                }
+                return reaction.emoji.name == item.emoji
+            })[0];
             if (!roleReaction) {
                 throw new Error(`Não foi encontrado este emoji na base: ${reaction.emoji.name}`);
             }
@@ -39,7 +40,7 @@ export default new Event({
                 console.log(`user: ${user.username} - ID: ${user.id} já possui a role: ${roleApprove.name} - ID: ${roleApprove.id}`);
                 return;
             }
-            
+
             const embed: APIEmbed = {
                 title: `Aprovação`,
                 description: `Solicitação de cargo`,
@@ -66,18 +67,20 @@ export default new Event({
                     }
                 ],
             };
-            
-            const row = new ActionRowBuilder<ButtonBuilder>({components:[
-                new ButtonBuilder({
-                    customId: "approve_roles-aprovar", label: "Aprovar", style: ButtonStyle.Success,
-                }),
-                new ButtonBuilder({
-                    customId: "approve_roles-recusar", label: "Recusar", style: ButtonStyle.Danger,
-                }),
-            ]});
 
-            const message = await channelApprove.send({embeds: [embed], components: [row]});
-            
+            const row = new ActionRowBuilder<ButtonBuilder>({
+                components: [
+                    new ButtonBuilder({
+                        customId: "approve_roles-aprovar", label: "Aprovar", style: ButtonStyle.Success,
+                    }),
+                    new ButtonBuilder({
+                        customId: "approve_roles-recusar", label: "Recusar", style: ButtonStyle.Danger,
+                    }),
+                ]
+            });
+
+            const message = await channelApprove.send({ embeds: [embed], components: [row] });
+
             await createApproveRole({
                 guild_id: message.guildId,
                 channel_id: message.channelId,
@@ -86,7 +89,7 @@ export default new Event({
                 role_id: roleApprove.id,
                 user_id: user.id,
             });
-            
+
         }
     },
 })

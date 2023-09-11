@@ -18,7 +18,7 @@ export async function connect() {
 }
 
 export function getDb(): Db {
-    if(!db) {
+    if (!db) {
         throw new Error('❌ Conexão com o MongoDB não estabelecida!'.red);
     }
     return db;

@@ -13,21 +13,21 @@ export default new Command({
         }
     ],
     isAdmin: true,
-    async run({interaction, options}) {
+    async run({ interaction, options }) {
         if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
-        await interaction.deferReply({ephemeral: true});
-        
+        await interaction.deferReply({ ephemeral: true });
+
         let amount = options.getInteger("quantidade");
 
         if (!amount) amount = 9999999;
 
         interaction.channel?.bulkDelete(Math.min(amount, 100), true)
-        .then(deletedMessages => {
-            interaction.editReply({content: `${deletedMessages.size} mensagens limpas`})
-        })
-        .catch(reason => {
-            interaction.editReply({content: `Não foi possível deletar mensagens: \n${reason}`})
-        });
+            .then(deletedMessages => {
+                interaction.editReply({ content: `${deletedMessages.size} mensagens limpas` })
+            })
+            .catch(reason => {
+                interaction.editReply({ content: `Não foi possível deletar mensagens: \n${reason}` })
+            });
 
     },
 })
